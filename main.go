@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/vault/api"
@@ -27,21 +28,38 @@ type Config struct {
 }
 
 func loadConfig() (*Config, error) {
-	// Read the config file
-	data, err := os.ReadFile(".idot.json")
+	// Get current working directory
+	currentDir, err := os.Getwd()
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, nil
+		return nil, fmt.Errorf("failed to get current directory: %v", err)
+	}
+
+	// Search for config file recursively up the directory tree
+	for {
+		// Try to read the config file in current directory
+		data, err := os.ReadFile(filepath.Join(currentDir, ".idot.json"))
+		if err == nil {
+			var config Config
+			if err := json.Unmarshal(data, &config); err != nil {
+				return nil, fmt.Errorf("failed to parse config file: %v", err)
+			}
+			return &config, nil
 		}
+
+		// If file doesn't exist, try parent directory
+		if os.IsNotExist(err) {
+			parentDir := filepath.Dir(currentDir)
+			// Stop if we've reached the root directory
+			if parentDir == currentDir {
+				return nil, nil
+			}
+			currentDir = parentDir
+			continue
+		}
+
+		// If there's any other error, return it
 		return nil, fmt.Errorf("failed to read config file: %v", err)
 	}
-
-	var config Config
-	if err := json.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse config file: %v", err)
-	}
-
-	return &config, nil
 }
 
 func getSecrets() (map[string]string, error) {
@@ -113,7 +131,9 @@ func getSecrets() (map[string]string, error) {
 		token = result.Data.ID
 	} else if idToken != "" {
 		if role == "" {
-			return nil, fmt.Errorf("--role is required when VAULT_ID_TOKEN is set")
+			// Calculate role name from path by replacing slashes with underscores
+			role = strings.ReplaceAll(kvPath, "/", "_")
+			fmt.Printf("No role specified, using calculated role name: %s\n", role)
 		}
 		// Resolve ID token to access token
 		client.SetToken(idToken)
