@@ -1,4 +1,4 @@
-module vault-loader
+module github.com/idot-digital/vault-loader
 
 go 1.21
 

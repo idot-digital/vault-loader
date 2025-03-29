@@ -21,7 +21,7 @@ A command-line tool that loads secrets from HashiCorp Vault and exports them as 
 ## Installation
 
 ```bash
-go install github.com/yourusername/vault-loader@latest
+go install github.com/idot-digital/vault-loader@latest
 ```
 
 ## Usage
