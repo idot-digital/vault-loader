@@ -48,7 +48,7 @@ case "$ARCH" in
     x86_64)
         ARCH="amd64"
         ;;
-    aarch64)
+    aarch64|arm64)
         ARCH="arm64"
         ;;
     *)
