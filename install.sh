@@ -39,7 +39,6 @@ check_command() {
 printf "Checking dependencies...\n"
 check_command "curl"
 check_command "tar"
-check_command "sudo"
 
 printf "${GREEN}Installing vault-loader...${NC}\n"
 
@@ -79,7 +78,7 @@ tar xzf vault-loader.tar.gz
 
 # Install binary
 printf "Installing vault-loader binary...\n"
-sudo install -m 755 "vault-loader-${OS}-${ARCH}" /usr/local/bin/vault-loader
+install -m 755 "vault-loader-${OS}-${ARCH}" /usr/local/bin/vault-loader
 
 # Clean up
 cd - > /dev/null
