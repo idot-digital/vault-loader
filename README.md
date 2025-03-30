@@ -21,9 +21,25 @@ A command-line tool that loads secrets from HashiCorp Vault and exports them as 
 
 ## Installation
 
+### Quick Install (Linux/macOS)
+
+```bash
+curl -s https://vault-loader.idot-digital.com/install.sh | sh
+```
+
+### Manual Installation
+
+Visit [vault-loader.idot-digital.com](https://vault-loader.idot-digital.com) to download the latest release for your platform.
+
+### Go Install (Alternative)
+
 ```bash
 go install github.com/idot-digital/vault-loader@latest
 ```
+
+### Windows Installation
+
+For Windows users, you can use the Go install command above, or download the Windows binary from the [releases page](https://vault-loader.idot-digital.com).
 
 ## Usage
 
