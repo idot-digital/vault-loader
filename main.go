@@ -17,6 +17,8 @@ var (
 	kvPath   string
 	role     string
 	kvEngine string
+	roleID   string
+	secretID string
 )
 
 type Config struct {
@@ -95,6 +97,12 @@ func getSecrets() (map[string]string, error) {
 			kvEngine = "kv" // Default value
 		}
 	}
+	if roleID == "" {
+		roleID = os.Getenv("VAULT_ROLE_ID")
+	}
+	if secretID == "" {
+		secretID = os.Getenv("VAULT_SECRET_ID")
+	}
 
 	// Check if path is provided
 	if kvPath == "" {
@@ -108,11 +116,11 @@ func getSecrets() (map[string]string, error) {
 		return nil, fmt.Errorf("failed to create Vault client: %v", err)
 	}
 
-	// Check for VAULT_TOKEN or VAULT_ID_TOKEN
+	// Check for VAULT_TOKEN, VAULT_ID_TOKEN, or AppRole credentials
 	token := os.Getenv("VAULT_TOKEN")
 	idToken := os.Getenv("VAULT_ID_TOKEN")
 
-	if token == "" && idToken == "" {
+	if token == "" && idToken == "" && roleID == "" && secretID == "" {
 		// Try to get token from vault CLI session
 		cmd := exec.Command("vault", "token", "lookup", "-format=json")
 		output, err := cmd.Output()
@@ -143,6 +151,16 @@ func getSecrets() (map[string]string, error) {
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve ID token: %v", err)
+		}
+		token = secret.Auth.ClientToken
+	} else if roleID != "" && secretID != "" {
+		// Authenticate using AppRole
+		secret, err := client.Logical().Write("auth/approle/login", map[string]interface{}{
+			"role_id":   roleID,
+			"secret_id": secretID,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to authenticate with AppRole: %v", err)
 		}
 		token = secret.Auth.ClientToken
 	}
@@ -188,6 +206,8 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&kvPath, "path", "p", "", "Path to the KV secrets (required)")
 	rootCmd.PersistentFlags().StringVarP(&role, "role", "r", "", "Role to use when resolving ID token (required if VAULT_ID_TOKEN is set)")
 	rootCmd.PersistentFlags().StringVarP(&kvEngine, "engine", "e", "kv", "Name of the KV secrets engine")
+	rootCmd.PersistentFlags().StringVarP(&roleID, "role-id", "", "", "Role ID for AppRole authentication")
+	rootCmd.PersistentFlags().StringVarP(&secretID, "secret-id", "", "", "Secret ID for AppRole authentication")
 
 	// Export command
 	var exportCmd = &cobra.Command{

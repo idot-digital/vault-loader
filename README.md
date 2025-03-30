@@ -7,6 +7,7 @@ A command-line tool that loads secrets from HashiCorp Vault and exports them as 
 - Automatically detects and uses existing Vault token from:
   - `VAULT_TOKEN` environment variable
   - `VAULT_ID_TOKEN` environment variable (with role-based resolution)
+  - AppRole authentication (role ID and secret ID)
   - Current Vault CLI session
 - Loads secrets from KV secrets engine
 - Supports configuration via:
@@ -68,6 +69,8 @@ All commands support the following flags:
 - `--path, -p`: Path to the KV secrets (required)
 - `--role, -r`: Role to use when resolving ID token (required if VAULT_ID_TOKEN is set)
 - `--engine, -e`: Name of the KV secrets engine (default: "kv")
+- `--role-id`: Role ID for AppRole authentication
+- `--secret-id`: Secret ID for AppRole authentication
 
 ### Environment Variables
 
@@ -97,6 +100,8 @@ The following environment variables are used for Vault authentication:
 
 - `VAULT_TOKEN`: Direct access token for Vault
 - `VAULT_ID_TOKEN`: ID token for role-based authentication
+- `VAULT_ROLE_ID`: Role ID for AppRole authentication
+- `VAULT_SECRET_ID`: Secret ID for AppRole authentication
 - `VAULT_ADDR`: Vault server address (optional, defaults to https://127.0.0.1:8200)
 
 ## Examples
@@ -125,6 +130,14 @@ vault-loader export
 # Using VAULT_ID_TOKEN with role
 export VAULT_ID_TOKEN=your-id-token
 vault-loader export --role my-role
+
+# Using AppRole authentication
+export VAULT_ROLE_ID=your-role-id
+export VAULT_SECRET_ID=your-secret-id
+vault-loader export
+
+# Using AppRole authentication with command line flags
+vault-loader export --role-id your-role-id --secret-id your-secret-id
 
 # Using a different KV engine
 vault-loader export --engine secret
