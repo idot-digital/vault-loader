@@ -19,7 +19,7 @@ var (
 	kvEngine string
 	roleID   string
 	secretID string
-	quoted   bool
+	unquoted bool
 )
 
 type Config struct {
@@ -250,7 +250,7 @@ func main() {
 
 			// Write secrets to file
 			for key, value := range secrets {
-				if quoted {
+				if !unquoted {
 					// Escape quotes and newlines in the value
 					value = strings.ReplaceAll(value, "\"", "\\\"")
 					value = strings.ReplaceAll(value, "\n", "\\n")
@@ -264,8 +264,8 @@ func main() {
 		},
 	}
 
-	// Add the quoted flag to env command
-	envCmd.Flags().BoolVarP(&quoted, "quoted", "q", false, "Wrap values in quotes")
+	// Add the unquoted flag to env command
+	envCmd.Flags().BoolVarP(&unquoted, "unquoted", "u", false, "Do not wrap values in quotes")
 
 	// Run command
 	var runCmd = &cobra.Command{

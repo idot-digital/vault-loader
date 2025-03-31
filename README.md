@@ -87,6 +87,7 @@ All commands support the following flags:
 - `--engine, -e`: Name of the KV secrets engine (default: "kv")
 - `--role-id`: Role ID for AppRole authentication
 - `--secret-id`: Secret ID for AppRole authentication
+- `--unquoted`: Export secrets without quotes (default: false)
 
 ### Environment Variables
 
