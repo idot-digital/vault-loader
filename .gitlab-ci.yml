@@ -75,9 +75,8 @@ pages:
     paths:
       - public
     expire_in: never
-  rules:
-    - if: $CI_COMMIT_TAG
-    - if: $CI_COMMIT_BRANCH == master
+  only:
+    - master
 
 dockerize:
   stage: release
