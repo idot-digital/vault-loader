@@ -222,8 +222,11 @@ func main() {
 
 			// Output bash commands to set environment variables
 			for key, value := range secrets {
-				// Escape single quotes in the value
+				// Escape special characters in the value
 				value = strings.ReplaceAll(value, "'", "'\\''")
+				value = strings.ReplaceAll(value, "\n", "\\n")
+				value = strings.ReplaceAll(value, "\r", "\\r")
+				value = strings.ReplaceAll(value, "\t", "\\t")
 				fmt.Printf("export %s='%s'\n", key, value)
 			}
 
