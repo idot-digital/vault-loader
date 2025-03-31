@@ -41,6 +41,24 @@ go install github.com/idot-digital/vault-loader@latest
 
 For Windows users, you can use the Go install command above, or download the Windows binary from the [releases page](https://vault-loader.idot-digital.com).
 
+### Docker
+
+You can use Vault Loader through Docker:
+
+```bash
+# Pull the latest version
+docker pull idotdigital/vault-loader:latest
+
+# Run vault-loader (example with export command)
+docker run --rm -v $PWD:/work -w /work idotdigital/vault-loader:latest export
+```
+
+The container supports both amd64 and arm64 architectures. When using Docker, make sure to:
+
+- Mount your working directory to access local files
+- Set the working directory to where your configuration files are located
+- Pass through any necessary environment variables using `-e` or `--env-file`
+
 ## Usage
 
 The tool provides three main commands:

@@ -74,5 +74,20 @@
         <li><a href="vault-loader-windows-arm64.tar.gz">Windows (arm64)</a></li>
       </ul>
     </div>
+    <div class="release">
+      <h2>Docker</h2>
+      <p>Pull the latest version of Vault Loader from Docker Hub:</p>
+      <div class="install-command">
+        <code>docker pull idotdigital/vault-loader:latest</code>
+      </div>
+      <p>Usage example:</p>
+      <div class="install-command">
+        <code
+          >docker run --rm -v $PWD:/work -w /work
+          idotdigital/vault-loader:latest export</code
+        >
+      </div>
+      <p>The container supports both amd64 and arm64 architectures.</p>
+    </div>
   </body>
 </html>
