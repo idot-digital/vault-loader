@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	kvPath   string
+	kvPaths  []string
 	role     string
 	kvEngine string
 	roleID   string
@@ -24,9 +24,10 @@ var (
 
 type Config struct {
 	Secrets struct {
-		Path   string `json:"path"`
-		Role   string `json:"role"`
-		Engine string `json:"engine"`
+		Paths  []string `json:"paths"`
+		Path   string   `json:"path"` // For backward compatibility
+		Role   string   `json:"role"`
+		Engine string   `json:"engine"`
 	} `json:"secrets"`
 }
 
@@ -74,8 +75,12 @@ func getSecrets() (map[string]string, error) {
 
 	// Use config values if flags are not set
 	if idotConfig != nil {
-		if kvPath == "" {
-			kvPath = idotConfig.Secrets.Path
+		if len(kvPaths) == 0 {
+			if idotConfig.Secrets.Path != "" {
+				kvPaths = []string{idotConfig.Secrets.Path}
+			} else if len(idotConfig.Secrets.Paths) > 0 {
+				kvPaths = idotConfig.Secrets.Paths
+			}
 		}
 		if role == "" {
 			role = idotConfig.Secrets.Role
@@ -86,8 +91,11 @@ func getSecrets() (map[string]string, error) {
 	}
 
 	// Check environment variables if flags and config are not set
-	if kvPath == "" {
-		kvPath = os.Getenv("VAULT_LOADER_PATH")
+	if len(kvPaths) == 0 {
+		pathStr := os.Getenv("VAULT_LOADER_PATH")
+		if pathStr != "" {
+			kvPaths = strings.Split(pathStr, ",")
+		}
 	}
 	if role == "" {
 		role = os.Getenv("VAULT_LOADER_ROLE")
@@ -105,9 +113,9 @@ func getSecrets() (map[string]string, error) {
 		secretID = os.Getenv("VAULT_SECRET_ID")
 	}
 
-	// Check if path is provided
-	if kvPath == "" {
-		return nil, fmt.Errorf("path is required: provide it with --path flag, VAULT_LOADER_PATH environment variable, or in .idot.json config file")
+	// Check if paths are provided
+	if len(kvPaths) == 0 {
+		return nil, fmt.Errorf("path(s) are required: provide them with --path flag, VAULT_LOADER_PATH environment variable, or in .idot.json config file")
 	}
 
 	// Initialize Vault client
@@ -141,7 +149,7 @@ func getSecrets() (map[string]string, error) {
 	} else if idToken != "" {
 		if role == "" {
 			// Calculate role name from path by replacing slashes with underscores
-			role = strings.ReplaceAll(kvPath, "/", "_")
+			role = strings.ReplaceAll(kvPaths[0], "/", "_")
 			fmt.Printf("No role specified, using calculated role name: %s\n", role)
 		}
 		// Resolve ID token to access token
@@ -166,32 +174,39 @@ func getSecrets() (map[string]string, error) {
 		token = secret.Auth.ClientToken
 	}
 
-	// Set the token and get secrets
+	// Set the token and get secrets from all paths
 	client.SetToken(token)
-
-	secret, err := client.KVv2(kvEngine).Get(context.Background(), kvPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read secrets: %v", err)
-	}
-
-	if secret == nil || secret.Data == nil {
-		return nil, fmt.Errorf("no secrets found at path: %s", kvPath)
-	}
-
-	// Convert secrets to map[string]string
 	secrets := make(map[string]string)
-	for key, value := range secret.Data {
-		// Convert the value to string
-		var strValue string
-		switch v := value.(type) {
-		case string:
-			strValue = v
-		case []byte:
-			strValue = string(v)
-		default:
-			strValue = fmt.Sprintf("%v", v)
+
+	for _, path := range kvPaths {
+		path = strings.TrimSpace(path)
+		if path == "" {
+			continue
 		}
-		secrets[strings.ToUpper(key)] = strValue
+
+		secret, err := client.KVv2(kvEngine).Get(context.Background(), path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read secrets from path %s: %v", path, err)
+		}
+
+		if secret == nil || secret.Data == nil {
+			return nil, fmt.Errorf("no secrets found at path: %s", path)
+		}
+
+		// Convert secrets to map[string]string
+		for key, value := range secret.Data {
+			// Convert the value to string
+			var strValue string
+			switch v := value.(type) {
+			case string:
+				strValue = v
+			case []byte:
+				strValue = string(v)
+			default:
+				strValue = fmt.Sprintf("%v", v)
+			}
+			secrets[strings.ToUpper(key)] = strValue
+		}
 	}
 
 	return secrets, nil
@@ -204,7 +219,7 @@ func main() {
 	}
 
 	// Global flags
-	rootCmd.PersistentFlags().StringVarP(&kvPath, "path", "p", "", "Path to the KV secrets (required)")
+	rootCmd.PersistentFlags().StringSliceVarP(&kvPaths, "path", "p", []string{}, "Comma-separated paths to the KV secrets (required)")
 	rootCmd.PersistentFlags().StringVarP(&role, "role", "r", "", "Role to use when resolving ID token (required if VAULT_ID_TOKEN is set)")
 	rootCmd.PersistentFlags().StringVarP(&kvEngine, "engine", "e", "kv", "Name of the KV secrets engine")
 	rootCmd.PersistentFlags().StringVarP(&roleID, "role-id", "", "", "Role ID for AppRole authentication")
