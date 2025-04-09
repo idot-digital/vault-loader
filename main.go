@@ -150,7 +150,7 @@ func getSecrets() (map[string]string, error) {
 		if role == "" {
 			// Calculate role name from path by replacing slashes with underscores
 			role = strings.ReplaceAll(kvPaths[0], "/", "_")
-			fmt.Printf("No role specified, using calculated role name: %s\n", role)
+			fmt.Fprintf(os.Stderr, "No role specified, using calculated role name: %s\n", role)
 		}
 		// Resolve ID token to access token
 		client.SetToken(idToken)
@@ -317,7 +317,7 @@ func main() {
 	rootCmd.AddCommand(exportCmd, envCmd, runCmd)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
