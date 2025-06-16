@@ -14,12 +14,13 @@ import (
 )
 
 var (
-	kvPaths  []string
-	role     string
-	kvEngine string
-	roleID   string
-	secretID string
-	unquoted bool
+	kvPaths     []string
+	role        string
+	kvEngine    string
+	roleID      string
+	secretID    string
+	unquoted    bool
+	ignoreIfFail bool
 )
 
 type Config struct {
@@ -291,9 +292,16 @@ func main() {
 		Short: "Run a command with the secrets as environment variables",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var secrets map[string]string
+			
 			secrets, err := getSecrets()
 			if err != nil {
-				return err
+				if ignoreIfFail {
+					fmt.Fprintf(os.Stderr, "skipped secret loading from hc-vault\n")
+					secrets = make(map[string]string)
+				} else {
+					return err
+				}
 			}
 
 			// Create command with environment variables
@@ -313,6 +321,9 @@ func main() {
 			return command.Run()
 		},
 	}
+
+	// Add the ignore-if-fail flag to run command
+	runCmd.Flags().BoolVar(&ignoreIfFail, "ignore-if-fail", false, "Continue running command even if secret loading fails")
 
 	rootCmd.AddCommand(exportCmd, envCmd, runCmd)
 

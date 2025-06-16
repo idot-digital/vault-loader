@@ -88,6 +88,12 @@ Run a command with the secrets as environment variables:
 vault-loader run npm start
 ```
 
+For Docker containers where secrets might be provided via direct environment variables instead of Vault, you can use the `--ignore-if-fail` flag to continue running even when Vault secret loading fails:
+
+```bash
+vault-loader run --ignore-if-fail npm start
+```
+
 ## Configuration
 
 Configuration can be provided in three ways, in order of precedence:
@@ -106,6 +112,10 @@ All commands support the following flags:
 - `--role-id`: Role ID for AppRole authentication
 - `--secret-id`: Secret ID for AppRole authentication
 - `--unquoted`: Export secrets without quotes (default: false)
+
+The `run` command also supports:
+
+- `--ignore-if-fail`: Continue running command even if secret loading fails
 
 ### Environment Variables
 
@@ -176,4 +186,7 @@ vault-loader export --role-id your-role-id --secret-id your-secret-id
 
 # Using a different KV engine
 vault-loader export --engine secret
+
+# Running a command even if Vault secrets fail to load
+vault-loader run --ignore-if-fail npm start
 ```
