@@ -13,10 +13,16 @@ stages:
   stage: build
   script:
     - apk add --no-cache git
-    - go build -ldflags="-w -s" -o vault-loader-$GOOS-$GOARCH
-    - tar czf vault-loader-$GOOS-$GOARCH.tar.gz vault-loader-$GOOS-$GOARCH
+    - |
+      if [[ $CI_COMMIT_TAG ]]; then
+        go build -ldflags="-w -s -X 'main.Version=$CI_COMMIT_TAG'" -o vault-loader-$GOOS-$GOARCH$FILE_EXT
+      else
+        go build -ldflags="-w -s" -o vault-loader-$GOOS-$GOARCH$FILE_EXT
+      fi
+    - tar czf vault-loader-$GOOS-$GOARCH.tar.gz vault-loader-$GOOS-$GOARCH$FILE_EXT
   only:
     - master
+    - tags
   artifacts:
     paths:
       - vault-loader-$GOOS-$GOARCH.tar.gz
@@ -51,12 +57,41 @@ build_windows_amd64:
   variables:
     GOOS: windows
     GOARCH: amd64
+    FILE_EXT: .exe
 
 build_windows_arm64:
   <<: *build_template
   variables:
     GOOS: windows
     GOARCH: arm64
+    FILE_EXT: .exe
+
+sign_and_notarize:
+  stage: build
+  tags:
+    - macos
+  before_script:
+    - tar xzf vault-loader-darwin-amd64.tar.gz
+    - tar xzf vault-loader-darwin-arm64.tar.gz
+  script:
+    - lipo -create -output vault-loader-darwin-universal vault-loader-darwin-amd64 vault-loader-darwin-arm64
+    - 'codesign -v -f --timestamp --options=runtime --sign "Developer ID Application Luis Kugel (FG5343Y9KB)" "vault-loader-darwin-universal"'
+    - mkdir pkg_payload
+    - cp vault-loader-darwin-universal pkg_payload/
+    - 'pkgbuild -root "pkg_payload" --identifier "de.luiskugel.vault-loader.pkg" --version "$CI_COMMIT_TAG"  --install-location "/usr/lical/bin" --sign "Developer ID Installer Luis Kugel (FG5343Y9KB)" "vault-loader-darwin-universal.pkg"'
+    - xcron notarytool submit "vault-loader-darwin-universal.pkg" --apple-id "${APPLEID}" --team-id "${TEAMID}" --password "${APPLEIDPASS}" --wait
+    - xcron stapler staple "vault-loader-darwin-universal.pkg"
+    - rm -rf pkg_payload
+    - rm vault-loader-darwin-amd64 vault-loader-darwin-arm64 vault-loader-darwin-amd64.tar.gz vault-loader-darwin-arm64.tar.gz
+  needs:
+    - build_darwin_amd64
+    - build_darwin_arm64
+  artifacts:
+    paths:
+      - vault-loader-darwin-universal.pkg
+    expire_in: 1 week
+  only:
+    - tags
 
 pages:
   stage: release
@@ -67,16 +102,18 @@ pages:
     - build_darwin_arm64
     - build_windows_amd64
     - build_windows_arm64
+    - sign_and_notarize
   script:
     - mkdir -p public
     - cp install.sh public/
     - cp vault-loader-*.tar.gz public/
+    - cp vault-loader-darwin-universal.pkg public/
   artifacts:
     paths:
       - public
     expire_in: never
   only:
-    - master
+    - tags
 
 dockerize:
   stage: release

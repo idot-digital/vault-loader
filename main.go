@@ -14,12 +14,12 @@ import (
 )
 
 var (
-	kvPaths     []string
-	role        string
-	kvEngine    string
-	roleID      string
-	secretID    string
-	unquoted    bool
+	kvPaths      []string
+	role         string
+	kvEngine     string
+	roleID       string
+	secretID     string
+	unquoted     bool
 	ignoreIfFail bool
 )
 
@@ -31,6 +31,8 @@ type Config struct {
 		Engine string   `json:"engine"`
 	} `json:"secrets"`
 }
+
+var Version = "nightly"
 
 func loadConfig() (*Config, error) {
 	// Get current working directory
@@ -217,6 +219,7 @@ func main() {
 	var rootCmd = &cobra.Command{
 		Use:   "vault-loader",
 		Short: "Load secrets from Vault and export them as environment variables",
+		Version: Version,
 	}
 
 	// Global flags
@@ -293,7 +296,7 @@ func main() {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var secrets map[string]string
-			
+
 			secrets, err := getSecrets()
 			if err != nil {
 				if ignoreIfFail {
