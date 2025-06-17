@@ -134,7 +134,6 @@ dockerize:
       --pull
       --push .
   only:
-    - master
     - tags
   tags:
     - amd64
