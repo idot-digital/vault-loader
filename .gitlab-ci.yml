@@ -74,10 +74,10 @@ sign_and_notarize:
     - tar xzf vault-loader-darwin-amd64.tar.gz
     - tar xzf vault-loader-darwin-arm64.tar.gz
   script:
-    - lipo -create -output vault-loader-darwin-universal vault-loader-darwin-amd64 vault-loader-darwin-arm64
-    - 'codesign -v -f --timestamp --options=runtime --sign "Developer ID Application: Luis Kugel (FG5343Y9KB)" "vault-loader-darwin-universal"'
+    - lipo -create -output vault-loader vault-loader-darwin-amd64 vault-loader-darwin-arm64
+    - 'codesign -v -f --timestamp --options=runtime --sign "Developer ID Application: Luis Kugel (FG5343Y9KB)" "vault-loader"'
     - mkdir pkg_payload
-    - cp vault-loader-darwin-universal pkg_payload/
+    - cp vault-loader pkg_payload/
     - 'pkgbuild --root "pkg_payload" --identifier "de.luiskugel.vault-loader.pkg" --version "$CI_COMMIT_TAG"  --install-location "/usr/local/bin" --sign "Developer ID Installer: Luis Kugel (FG5343Y9KB)" "vault-loader-darwin-universal.pkg"'
     - xcrun notarytool submit "vault-loader-darwin-universal.pkg" --apple-id "${APPLEID}" --team-id "${APPLETEAMID}" --password "${APPLEIDPASS}" --wait
     - xcrun stapler staple "vault-loader-darwin-universal.pkg"
