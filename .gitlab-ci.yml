@@ -79,8 +79,8 @@ sign_and_notarize:
     - mkdir pkg_payload
     - cp vault-loader-darwin-universal pkg_payload/
     - 'pkgbuild --root "pkg_payload" --identifier "de.luiskugel.vault-loader.pkg" --version "$CI_COMMIT_TAG"  --install-location "/usr/lical/bin" --sign "Developer ID Installer: Luis Kugel (FG5343Y9KB)" "vault-loader-darwin-universal.pkg"'
-    - xcron notarytool submit "vault-loader-darwin-universal.pkg" --apple-id "${APPLEID}" --team-id "${TEAMID}" --password "${APPLEIDPASS}" --wait
-    - xcron stapler staple "vault-loader-darwin-universal.pkg"
+    - xcrun notarytool submit "vault-loader-darwin-universal.pkg" --apple-id "${APPLEID}" --team-id "${TEAMID}" --password "${APPLEIDPASS}" --wait
+    - xcrun stapler staple "vault-loader-darwin-universal.pkg"
     - rm -rf pkg_payload
     - rm vault-loader-darwin-amd64 vault-loader-darwin-arm64 vault-loader-darwin-amd64.tar.gz vault-loader-darwin-arm64.tar.gz
   needs:
