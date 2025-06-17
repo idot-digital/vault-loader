@@ -75,7 +75,7 @@ sign_and_notarize:
     - tar xzf vault-loader-darwin-arm64.tar.gz
   script:
     - lipo -create -output vault-loader-darwin-universal vault-loader-darwin-amd64 vault-loader-darwin-arm64
-    - 'codesign -v -f --timestamp --options=runtime --sign "Developer ID Application Luis Kugel (FG5343Y9KB)" "vault-loader-darwin-universal"'
+    - 'codesign -v -f --timestamp --options=runtime --sign "Developer ID Application: Luis Kugel (FG5343Y9KB)" "vault-loader-darwin-universal"'
     - mkdir pkg_payload
     - cp vault-loader-darwin-universal pkg_payload/
     - 'pkgbuild -root "pkg_payload" --identifier "de.luiskugel.vault-loader.pkg" --version "$CI_COMMIT_TAG"  --install-location "/usr/lical/bin" --sign "Developer ID Installer Luis Kugel (FG5343Y9KB)" "vault-loader-darwin-universal.pkg"'
